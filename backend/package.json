@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-   "dev": "nodemon --env-file .env index.js",
-    "start": "node index.js" },
+    "dev": "nodemon --env-file .env index.js",
+    "start": "node index.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -22,6 +23,7 @@
     "mysql": "^2.18.1",
     "nodemon": "^3.1.14",
     "path": "^0.12.7",
+    "pg": "^8.16.3",
     "supabase": "^2.101.0"
   }
 }
