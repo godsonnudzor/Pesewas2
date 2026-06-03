@@ -1,14 +1,20 @@
-import { useState } from 'react'
-import './App.css'
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
+import CompanySettings from "./pages/CompanySettings";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <div>
-       <h3>Final Project</h3>
-      </div>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/home" />} />
+          <Route path="/home" element={<CompanySettings />} />
+        </Routes>
+      </Router>
     </>
   )
 }
