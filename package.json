@@ -1,0 +1,16 @@
+{
+  "name": "pesewas2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "cd frontend && npm run build",
+    "dev": "cd frontend && npm run dev",
+    "postinstall": "cd frontend && npm install"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.101.0",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.3"
+  }
+}

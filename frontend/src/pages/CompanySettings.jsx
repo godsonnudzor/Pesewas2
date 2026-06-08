@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/authContext';
 import { Calendar, Lock, Unlock, Plus, CheckCircle, AlertCircle, Building2, Loader2 } from 'lucide-react';
 
 export default function CompanySettings() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
   // Application Data States
   const [fiscalYears, setFiscalYears] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,11 +116,30 @@ export default function CompanySettings() {
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Module Header View */}
-        <div className="flex items-center space-x-3 border-b border-gray-200 pb-5">
-          <Building2 className="h-8 w-8 text-indigo-600" />
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Company Settings</h1>
-            <p className="text-sm text-gray-500">Manage your organization's configurations and active ledger structures.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between items-start space-y-3 sm:space-y-0 space-x-0 sm:space-x-3 border-b border-gray-200 pb-5">
+          <div className="flex items-center space-x-3">
+            <Building2 className="h-8 w-8 text-indigo-600" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900">Company Settings</h1>
+              <p className="text-sm text-gray-500">Manage your organization's configurations and active ledger structures.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {user && (
+              <div className="text-sm text-gray-500">
+                Signed in as <span className="font-semibold text-gray-900">{user.email}</span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+            >
+              Logout
+            </button>
           </div>
         </div>
 
@@ -137,7 +161,7 @@ export default function CompanySettings() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Form Side panel */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
+          <div className="bg-cadetblue p-6 rounded-xl shadow-sm border border-gray-200 h-fit">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Calendar className="h-5 w-5 text-indigo-500" />
               New Fiscal Year
