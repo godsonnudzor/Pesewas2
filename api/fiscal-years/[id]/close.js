@@ -15,6 +15,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Fiscal year id is required' });
   }
 
+  if (!supabase) {
+    return res.status(500).json({ message: 'Supabase is not configured' });
+  }
+
   try {
     const { data, error } = await supabase
       .from('fiscal_years')

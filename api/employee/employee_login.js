@@ -5,6 +5,10 @@ import { supabase } from '../lib/supabaseClient.js';
 const jwtSecret = process.env.JWT_SECRET || 'secret_key_jwt';
 
 export default async function handler(req, res) {
+  if (!supabase) {
+    return res.status(500).json({ loginStatus: false, Error: 'Supabase is not configured' });
+  }
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).json({ loginStatus: false, Error: 'Method not allowed' });

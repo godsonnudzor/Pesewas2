@@ -1,6 +1,10 @@
 import { supabase } from '../lib/supabaseClient.js';
 
 export default async function handler(req, res) {
+  if (!supabase) {
+    return res.status(500).json({ message: 'Supabase is not configured' });
+  }
+
   if (req.method === 'GET') {
     try {
       const { data, error } = await supabase
