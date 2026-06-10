@@ -1,0 +1,60 @@
+name: Validate Supabase environment before deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  check-env:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Supabase envs / secrets
+        run: |
+          set -euo pipefail
+          required=(SUPABASE_URL SUPABASE_ANON_KEY)
+          missing=()
+          for v in "${required[@]}"; do
+            if [ -z "${!v:-}" ]; then
+              missing+=("$v")
+            fi
+          done
+
+          if [ ${#missing[@]} -eq 0 ]; then
+            echo "Required GitHub secrets are set: ${required[*]}"
+            exit 0
+          fi
+
+          echo "Missing GitHub secrets: ${missing[*]}"
+
+          if [ -n "${VERCEL_TOKEN:-}" ] && [ -n "${VERCEL_PROJECT_ID:-}" ]; then
+            echo "VERCEL_TOKEN and VERCEL_PROJECT_ID provided — validating Vercel project envs..."
+            npm ci --no-audit --no-fund
+            # List envs from Vercel and check presence of required names
+            npx vercel@28 env ls --token "$VERCEL_TOKEN" --project "$VERCEL_PROJECT_ID" | sed 's/\r$//' > vercel_envs.txt || true
+            have() { grep -q -E "\b$1\b" vercel_envs.txt && return 0 || return 1; }
+            notfound=()
+            for v in "${required[@]}"; do
+              if ! have "$v"; then notfound+=("$v"); fi
+            done
+            if [ ${#notfound[@]} -ne 0 ]; then
+              echo "Vercel is missing required envs: ${notfound[*]}"
+              exit 1
+            fi
+            echo "Vercel has required envs set."
+            exit 0
+          fi
+
+          echo "No Vercel token/project configured. Add repo secrets or set VERCEL_TOKEN+VERCEL_PROJECT_ID to validate Vercel environment variables."
+          exit 1
+        shell: bash

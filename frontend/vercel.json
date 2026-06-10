@@ -1,5 +1,21 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite"
+    "version": 2,
+    "builds": [
+        {
+            "src": "index.js",
+            "use": "@vercel/node"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "index.js"
+        }
+    ],
+    "env": {
+        "NODE_ENV": "production",
+        "SUPABASE_URL": "@SUPABASE_URL",
+        "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
+        "PORT": "3000"
+    }
 }

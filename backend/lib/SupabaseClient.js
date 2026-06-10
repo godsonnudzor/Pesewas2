@@ -8,7 +8,12 @@ export const createSupabaseClient = () => {
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase credentials are not configured');
+    const missing = [];
+    if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push('SUPABASE_URL | NEXT_PUBLIC_SUPABASE_URL');
+    if (!process.env.SUPABASE_ANON_KEY && !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) missing.push('SUPABASE_ANON_KEY | NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
+    const msg = `Supabase credentials are not configured. Missing: ${missing.join(', ')}. Add them to Vercel or set locally in .env`;
+    console.error(msg);
+    throw new Error(msg);
   }
 
   return createClient(supabaseUrl, supabaseAnonKey, {
