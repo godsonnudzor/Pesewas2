@@ -23,7 +23,7 @@ router.post("/employee_login", async (req, res) => {
     }
 
     const { data, error } = await supabase
-      .from("employee")
+      .from("employees")
       .select("*")
       .eq("email", email)
       .single();
@@ -63,7 +63,7 @@ router.get('/detail/:id', async (req, res) => {
   try {
     const id = req.params.id;
     const { data, error } = await supabase
-      .from("employee")
+      .from("employees")
       .select("*")
       .eq("id", id)
       .single();

@@ -26,7 +26,7 @@ const findUserByEmail = async (email) => {
   }
 
   const { data: employeeUser, error: employeeError } = await supabase
-    .from("employee")
+    .from("employees")
     .select("*")
     .eq("email", email)
     .single();
