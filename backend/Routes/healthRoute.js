@@ -8,12 +8,21 @@ import { supabase, isSupabaseConfigured } from "../lib/SupabaseClient.js";
 const router = express.Router();
 router.get("/api/health", async (req, res) => {
   try {
+    const supabaseUrlSet =
+      Boolean(process.env.SUPABASE_URL) ||
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) ||
+      Boolean(process.env.VITE_SUPABASE_URL);
+    const supabaseKeySet =
+      Boolean(process.env.SUPABASE_ANON_KEY) ||
+      Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) ||
+      Boolean(process.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+
     const health = {
       server: "running",
       timestamp: new Date().toISOString(),
       supabaseConfigured: isSupabaseConfigured,
-      supabaseUrl: process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL ? "set" : "missing",
-      supabaseKey: process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ? "set" : "missing",
+      supabaseUrl: supabaseUrlSet ? "set" : "missing",
+      supabaseKey: supabaseKeySet ? "set" : "missing",
     };
 
     if (!isSupabaseConfigured) {
