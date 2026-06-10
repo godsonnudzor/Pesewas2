@@ -4,6 +4,15 @@ import { supabase } from '../lib/supabaseClient.js';
 
 const jwtSecret = process.env.JWT_SECRET || 'secret_key_jwt';
 
+const isBcryptHash = (value) =>
+  typeof value === 'string' && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(value);
+const verifyPassword = async (plainPassword, storedPassword) => {
+  if (isBcryptHash(storedPassword)) {
+    return bcrypt.compare(plainPassword, storedPassword);
+  }
+  return plainPassword === storedPassword;
+};
+
 export default async function handler(req, res) {
   if (!supabase) {
     return res.status(500).json({ loginStatus: false, Error: 'Supabase is not configured' });
@@ -21,7 +30,7 @@ export default async function handler(req, res) {
     }
 
     const { data, error } = await supabase
-      .from('employee')
+      .from('employees')
       .select('*')
       .eq('email', email)
       .single();
@@ -30,7 +39,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ loginStatus: false, Error: 'Wrong Email or Password' });
     }
 
-    const passwordMatch = await bcrypt.compare(password, data.password);
+    const passwordMatch = await verifyPassword(password, data.password);
     if (!passwordMatch) {
       return res.status(401).json({ loginStatus: false, Error: 'Wrong Email or Password' });
     }

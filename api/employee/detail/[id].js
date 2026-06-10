@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
   try {
     const { data, error } = await supabase
-      .from('employee')
+      .from('employees')
       .select('*')
       .eq('id', id)
       .single();
