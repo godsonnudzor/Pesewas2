@@ -13,25 +13,54 @@ const verifyPassword = async (plainPassword, storedPassword) => {
   return plainPassword === storedPassword;
 };
 
-const findUserByEmail = async (email) => {
-  const { data: adminUser, error: adminError } = await supabase
-    .from('admin')
-    .select('*')
-    .eq('email', email)
-    .single();
+const passwordFieldCandidates = [
+  'password',
+  'password_hash',
+  'hashed_password',
+  'pass',
+  'pwd',
+  'user_password',
+  'user_pass',
+];
 
-  if (!adminError && adminUser) {
-    return { user: adminUser, role: 'admin' };
+const getStoredPassword = (user) => {
+  if (!user || typeof user !== 'object') return null;
+  for (const key of passwordFieldCandidates) {
+    if (typeof user[key] === 'string') {
+      return user[key];
+    }
+  }
+  const fallbackKey = Object.keys(user).find((key) =>
+    /(password|pass|pwd|hash|secret)/i.test(key) && typeof user[key] === 'string',
+  );
+  return fallbackKey ? user[fallbackKey] : null;
+};
+
+const findUserByEmail = async (email) => {
+  const adminTables = ['admin', 'admins'];
+  for (const table of adminTables) {
+    const { data: adminUser, error: adminError } = await supabase
+      .from(table)
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (!adminError && adminUser) {
+      return { user: adminUser, role: 'admin' };
+    }
   }
 
-  const { data: employeeUser, error: employeeError } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('email', email)
-    .single();
+  const employeeTables = ['employees', 'employee'];
+  for (const table of employeeTables) {
+    const { data: employeeUser, error: employeeError } = await supabase
+      .from(table)
+      .select('*')
+      .eq('email', email)
+      .single();
 
-  if (!employeeError && employeeUser) {
-    return { user: employeeUser, role: 'employee' };
+    if (!employeeError && employeeUser) {
+      return { user: employeeUser, role: 'employee' };
+    }
   }
 
   return null;
@@ -58,7 +87,16 @@ export default async function handler(req, res) {
       return res.status(401).json({ success: false, error: 'Wrong Email or Password' });
     }
 
-    const passwordMatch = await verifyPassword(password, found.user.password);
+    const storedPassword = getStoredPassword(found.user);
+    if (!storedPassword) {
+      console.warn('Auth login: no password field found for user', {
+        userId: found.user.id,
+        userKeys: Object.keys(found.user),
+      });
+      return res.status(401).json({ success: false, error: 'Wrong Email or Password' });
+    }
+
+    const passwordMatch = await verifyPassword(password, storedPassword);
     if (!passwordMatch) {
       return res.status(401).json({ success: false, error: 'Wrong Email or Password' });
     }

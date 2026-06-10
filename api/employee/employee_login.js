@@ -13,6 +13,29 @@ const verifyPassword = async (plainPassword, storedPassword) => {
   return plainPassword === storedPassword;
 };
 
+const passwordFieldCandidates = [
+  'password',
+  'password_hash',
+  'hashed_password',
+  'pass',
+  'pwd',
+  'user_password',
+  'user_pass',
+];
+
+const getStoredPassword = (user) => {
+  if (!user || typeof user !== 'object') return null;
+  for (const key of passwordFieldCandidates) {
+    if (typeof user[key] === 'string') {
+      return user[key];
+    }
+  }
+  const fallbackKey = Object.keys(user).find((key) =>
+    /(password|pass|pwd|hash|secret)/i.test(key) && typeof user[key] === 'string',
+  );
+  return fallbackKey ? user[fallbackKey] : null;
+};
+
 export default async function handler(req, res) {
   if (!supabase) {
     return res.status(500).json({ loginStatus: false, Error: 'Supabase is not configured' });
@@ -29,17 +52,38 @@ export default async function handler(req, res) {
       return res.status(400).json({ loginStatus: false, Error: 'Email and password are required' });
     }
 
-    const { data, error } = await supabase
-      .from('employees')
-      .select('*')
-      .eq('email', email)
-      .single();
+    const employeeTables = ['employees', 'employee'];
+    let data = null;
+    let error = null;
+
+    for (const table of employeeTables) {
+      const response = await supabase
+        .from(table)
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (!response.error && response.data) {
+        data = response.data;
+        break;
+      }
+      error = response.error || error;
+    }
 
     if (error || !data) {
       return res.status(401).json({ loginStatus: false, Error: 'Wrong Email or Password' });
     }
 
-    const passwordMatch = await verifyPassword(password, data.password);
+    const storedPassword = getStoredPassword(data);
+    if (!storedPassword) {
+      console.warn('Employee login: no password field found for user', {
+        userId: data.id,
+        userKeys: Object.keys(data),
+      });
+      return res.status(401).json({ loginStatus: false, Error: 'Wrong Email or Password' });
+    }
+
+    const passwordMatch = await verifyPassword(password, storedPassword);
     if (!passwordMatch) {
       return res.status(401).json({ loginStatus: false, Error: 'Wrong Email or Password' });
     }
