@@ -6,6 +6,15 @@ import path from "path";
 import { supabase } from "../lib/SupabaseClient.js";
 
 const router = express.Router();
+const jwtSecret = process.env.JWT_SECRET || "secret_key_jwt";
+
+const isBcryptHash = (value) => typeof value === "string" && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(value);
+const verifyPassword = async (plainPassword, storedPassword) => {
+  if (isBcryptHash(storedPassword)) {
+    return await bcrypt.compare(plainPassword, storedPassword);
+  }
+  return plainPassword === storedPassword;
+};
 
 router.post("/login", async (req, res) => {
   try {
@@ -23,7 +32,7 @@ router.post("/login", async (req, res) => {
     }
 
     // Compare password with stored hash
-    const passwordMatch = await bcrypt.compare(password, data.password);
+    const passwordMatch = await verifyPassword(password, data.password);
 
     if (!passwordMatch) {
       return res.json({ loginStatus: false, Error: "Wrong Password" });
@@ -32,7 +41,7 @@ router.post("/login", async (req, res) => {
     // Create JWT token
     const token = jwt.sign(
       { role: "admin", email: data.email, id: data.id },
-      "secret_key_jwt",
+      jwtSecret,
       { expiresIn: "7d" }
     );
 

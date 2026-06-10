@@ -6,6 +6,14 @@ import { supabase } from "../lib/SupabaseClient.js";
 const router = express.Router();
 const jwtSecret = process.env.JWT_SECRET || "secret_key_jwt";
 
+const isBcryptHash = (value) => typeof value === "string" && /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(value);
+const verifyPassword = async (plainPassword, storedPassword) => {
+  if (isBcryptHash(storedPassword)) {
+    return await bcrypt.compare(plainPassword, storedPassword);
+  }
+  return plainPassword === storedPassword;
+};
+
 const findUserByEmail = async (email) => {
   const { data: adminUser, error: adminError } = await supabase
     .from("admin")
@@ -43,7 +51,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ success: false, error: "Wrong Email or Password" });
     }
 
-    const passwordMatch = await bcrypt.compare(password, found.user.password);
+    const passwordMatch = await verifyPassword(password, found.user.password);
     if (!passwordMatch) {
       return res.status(401).json({ success: false, error: "Wrong Email or Password" });
     }
